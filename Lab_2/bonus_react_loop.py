@@ -78,7 +78,6 @@ def run_react_agent(user_prompt: str):
     for iteration in range(5):
         print(f"\n===== Iteration {iteration} =====")
 
-        # Reason: the model decides whether it needs a tool or can answer
         try:
             response = client.models.generate_content(
                 model=MODEL,
@@ -86,7 +85,7 @@ def run_react_agent(user_prompt: str):
                 config=config,
             )
         except errors.ServerError as e:
-            print(f"\n[STOPPED] Gemini server error: {e}. Try again later.")
+            print(f"\n[STOPPED] Gemini server error: {e}.")
             return None
 
         if not response.function_calls:
@@ -110,7 +109,6 @@ def run_react_agent(user_prompt: str):
                 )
             )
 
-        # Observe: send all tool results back to the model in one message
         messages.append(types.Content(role="user", parts=response_parts))
 
     print(f"\n[STOPPED] Reached max_iterations = 5 without a final answer.")
