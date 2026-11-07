@@ -149,7 +149,24 @@ def run_agent(
                 #   denied            -> output = f"DENIED BY OPERATOR: {feedback}. Adjust your plan."
                 #   approved          -> run with decision.args if the operator edited them, else args
                 #                        (and tell the model its arguments were edited)
-                output = execute_tool(tools_map, call.name, args)
+                if call.name in requires_approval:
+                    if approver is None:
+                        # No human available -> fail closed: a risky tool never runs unattended
+                        decision = Decision(False, feedback="No operator is available to approve this call")
+                    else:
+                        decision = approver(call.name, args)
+
+                    if not decision.approved:
+                        output = f"DENIED BY OPERATOR: {decision.feedback}. Adjust your plan."
+                    elif decision.args is not None:
+                        output = execute_tool(tools_map, call.name, decision.args)
+                        changed = {k: v for k, v in decision.args.items() if args.get(k) != v}
+                        output += (f" NOTE: the operator edited your arguments before running the tool: "
+                                   f"{json.dumps(changed)[:200]}.")
+                    else:
+                        output = execute_tool(tools_map, call.name, args)
+                else:
+                    output = execute_tool(tools_map, call.name, args)
 
             if verbose:
                 print(f"  <- [Tool Output] {output[:160]}")
