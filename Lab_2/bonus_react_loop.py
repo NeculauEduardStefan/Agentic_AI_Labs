@@ -55,7 +55,7 @@ TOOLS = {
 def execute_tool(tool_call) -> str:
     func = TOOLS.get(tool_call.name)
     if func is None:
-        return json.dumps({"error": f"Unknown tool {tool_call.name}"})
+        return json.dumps({"error": f"Unknown tool {tool_call.name}, and available tools are: {' '. join(TOOLS.keys())}"})
     try:
         return func(**(tool_call.args or {}))
     except Exception as e:
