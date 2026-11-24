@@ -27,11 +27,19 @@ SHORT = TRIP + f"\nReply with exactly one line and nothing else: {FORMAT}"
 # TODO: write a better prompt for the SAME question. Two changes only:
 #   1. give the model room to work before it answers;
 #   2. keep the same last line, so your code can parse it: {FORMAT}
-BETTER = TRIP + "\nTODO"
+BETTER = TRIP + (
+    "\nWork it out step by step first: compute each cost separately (flights, hotel, city tax, "
+    "museum passes), then the total, then compare the total with the budget. "
+    f"After your working, end with exactly one final line: {FORMAT}"
+)
 
 # BONUS 2 TODO: a prompt where the model does NOT calculate. It writes ONE arithmetic expression for the
 # total cost and ends with the line "Total: <expression>"; evaluate() below does the arithmetic.
-EXPRESSION_ONLY = TRIP + "\nTODO"
+EXPRESSION_ONLY = TRIP + (
+    "\nDo NOT calculate anything and do not write the result. Write ONE arithmetic expression for the "
+    "total cost of the trip, using only numbers, + - * / and parentheses (no units, no currency, no '='). "
+    "End with exactly this line and nothing after it: Total: <expression>"
+)
 
 ANSWER_RE = re.compile(r"Answer:\s*(yes|no)\s*,\s*(?:EUR|€)?\s*([\d.,]+)", re.I)
 
@@ -101,3 +109,11 @@ if __name__ == "__main__":
             print(f"   {str(p):<22} {t:>5} tok   last line: {last}")
         # BONUS 1 TODO: five answers to the same question - which one do you trust?
         # Count the parsed answers (collections.Counter) and print the most common one.
+
+        votes = Counter(p for p, _, _ in rows if p is not None)  # unparsable answers do not vote
+        if votes:
+            winner, count = votes.most_common(1)[0]
+            verdict = "correct" if winner == EXPECTED else "wrong"
+            print(f"   vote picks: {winner} ({count}/{len(rows)} votes) -> {verdict}")
+        else:
+            print("   vote picks: nothing (no answer could be parsed)")
